@@ -1456,10 +1456,11 @@
                 updatePodium(snapshot.val());
 
                 // Check if all players have answered (for host notification)
+                // Only check if answer has NOT been revealed yet
                 const gameStateRef = ref(database, 'gameState');
                 onValue(gameStateRef, (gameStateSnapshot) => {
                     const gameState = gameStateSnapshot.val();
-                    if (gameState && gameState.status === 'playing') {
+                    if (gameState && gameState.status === 'playing' && !gameState.showAnswer) {
                         checkAllPlayersAnsweredRealtime(snapshot.val(), gameState.currentQuestion);
                     }
                 }, { onlyOnce: true });
@@ -1469,6 +1470,7 @@
         function checkAllPlayersAnsweredRealtime(players, currentQuestionIndex) {
             const notification = document.getElementById('all-answered-notification');
 
+            // Always hide notification if conditions aren't met
             if (!players || !notification) {
                 if (notification) notification.classList.add('hidden');
                 return;
@@ -1482,13 +1484,16 @@
                 return;
             }
 
-            // Check if ALL players have answered the CURRENT question
-            const allAnswered = playerArray.every(player =>
-                player.answeredQuestion !== undefined &&
-                player.answeredQuestion === currentQuestionIndex
-            );
+            // Count how many players have answered the current question
+            let answeredCount = 0;
+            for (const player of playerArray) {
+                if (player.answeredQuestion === currentQuestionIndex) {
+                    answeredCount++;
+                }
+            }
 
-            if (allAnswered) {
+            // Only show if ALL players have answered
+            if (answeredCount === playerArray.length && answeredCount > 0) {
                 notification.classList.remove('hidden');
             } else {
                 notification.classList.add('hidden');
@@ -1752,6 +1757,12 @@
                 hostLightningBadgeContainer.classList.add('hidden');
             }
 
+            // Always start with notification hidden, will be shown if conditions are met
+            const notification = document.getElementById('all-answered-notification');
+            if (notification && !gameState.showAnswer) {
+                notification.classList.add('hidden');
+            }
+
             document.getElementById('host-question-number').textContent = questionIndex + 1;
             document.getElementById('host-question-display').textContent = question.question;
 
@@ -1833,6 +1844,12 @@
         };
 
         window.revealAnswer = function() {
+            // Hide notification when revealing answer
+            const notification = document.getElementById('all-answered-notification');
+            if (notification) {
+                notification.classList.add('hidden');
+            }
+
             const gameStateRef = ref(database, 'gameState');
             update(gameStateRef, {
                 showAnswer: true
