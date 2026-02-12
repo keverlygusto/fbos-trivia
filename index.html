@@ -763,6 +763,29 @@
             border: 2px solid #ef4444;
         }
 
+        .lightning-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #1a1a1a;
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+            border: 2px solid #f59e0b;
+        }
+
+        .timer-container.lightning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .timer-display.lightning {
+            color: #f59e0b;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 24px 16px;
@@ -915,9 +938,12 @@
             <!-- Playing Screen -->
             <div id="playing-view" class="hidden">
                 <div id="player-game-view">
+                    <div id="lightning-badge-container" style="text-align: center;" class="hidden">
+                        <span class="lightning-badge">⚡ LIGHTNING ROUND ⚡</span>
+                    </div>
                     <h2>Question <span id="question-number">1</span></h2>
 
-                    <div class="timer-container">
+                    <div class="timer-container" id="timer-container-player">
                         <div id="timer-display" class="timer-display">20</div>
                         <div class="timer-bar">
                             <div id="timer-bar-fill" class="timer-bar-fill" style="width: 100%"></div>
@@ -941,10 +967,13 @@
                 </div>
 
                 <div id="host-game-view" class="hidden">
+                    <div id="host-lightning-badge-container" style="text-align: center;" class="hidden">
+                        <span class="lightning-badge">⚡ LIGHTNING ROUND ⚡</span>
+                    </div>
                     <h2>Host Controls</h2>
 
                     <div class="question-info">
-                        Question <span id="host-question-number">1</span> of <span id="total-questions">30</span>
+                        Question <span id="host-question-number">1</span> of <span id="total-questions">40</span>
                     </div>
 
                     <div class="host-controls">
@@ -1005,7 +1034,9 @@
 
         // TRIVIA QUESTIONS
         const QUESTION_TIME_LIMIT = 20; // seconds
+        const LIGHTNING_ROUND_TIME_LIMIT = 10; // seconds for lightning round
         const MAX_POINTS = 1000;
+        const LIGHTNING_ROUND_START = 30; // Question 31 starts lightning round
 
         const questions = [
             // WINTER OLYMPICS (10 questions)
@@ -1164,6 +1195,58 @@
                 question: "Which AI company is known for creating the Gemini model?",
                 answers: ["Microsoft", "Amazon", "Google", "Apple"],
                 correct: 2
+            },
+
+            // LIGHTNING ROUND (10 questions - 10 seconds each!)
+            {
+                question: "What is the only mammal that can truly fly?",
+                answers: ["Flying Squirrel", "Bat", "Sugar Glider", "Flying Lemur"],
+                correct: 1
+            },
+            {
+                question: "How many bones are in the adult human body?",
+                answers: ["186", "206", "226", "246"],
+                correct: 1
+            },
+            {
+                question: "What year did the Titanic sink?",
+                answers: ["1910", "1912", "1914", "1916"],
+                correct: 1
+            },
+            {
+                question: "Which planet is known as the Red Planet?",
+                answers: ["Venus", "Mars", "Jupiter", "Saturn"],
+                correct: 1
+            },
+            {
+                question: "What is the world's largest ocean?",
+                answers: ["Atlantic", "Pacific", "Indian", "Arctic"],
+                correct: 1
+            },
+            {
+                question: "How many strings does a standard guitar have?",
+                answers: ["4", "5", "6", "7"],
+                correct: 2
+            },
+            {
+                question: "What is the chemical symbol for gold?",
+                answers: ["Go", "Gd", "Au", "Ag"],
+                correct: 2
+            },
+            {
+                question: "Which country gifted the Statue of Liberty to the United States?",
+                answers: ["England", "France", "Spain", "Italy"],
+                correct: 1
+            },
+            {
+                question: "How many sides does a hexagon have?",
+                answers: ["5", "6", "7", "8"],
+                correct: 1
+            },
+            {
+                question: "What is the fastest land animal?",
+                answers: ["Lion", "Cheetah", "Leopard", "Gazelle"],
+                correct: 1
             }
         ];
 
@@ -1412,6 +1495,19 @@
             const questionIndex = gameState.currentQuestion;
             const question = questions[questionIndex];
 
+            // Show lightning badge if in lightning round
+            const lightningBadgeContainer = document.getElementById('lightning-badge-container');
+            const timerContainer = document.getElementById('timer-container-player');
+            const isLightningRound = questionIndex >= LIGHTNING_ROUND_START;
+
+            if (isLightningRound) {
+                lightningBadgeContainer.classList.remove('hidden');
+                timerContainer.classList.add('lightning');
+            } else {
+                lightningBadgeContainer.classList.add('hidden');
+                timerContainer.classList.remove('lightning');
+            }
+
             document.getElementById('question-number').textContent = questionIndex + 1;
             document.getElementById('question-display').textContent = question.question;
 
@@ -1426,7 +1522,7 @@
                     document.getElementById('points-earned').classList.add('hidden');
 
                     // Start timer for new question
-                    startQuestionTimer();
+                    startQuestionTimer(questionIndex);
                 }
 
                 answersContainer.innerHTML = '';
@@ -1434,7 +1530,7 @@
                     const btn = document.createElement('button');
                     btn.className = 'answer-btn';
                     btn.textContent = String.fromCharCode(65 + index) + '. ' + answer;
-                    btn.onclick = () => selectAnswer(index, question.correct);
+                    btn.onclick = () => selectAnswer(index, question.correct, questionIndex);
 
                     if (gameState.showAnswer) {
                         btn.disabled = true;
@@ -1448,7 +1544,7 @@
             }
         }
 
-        function startQuestionTimer() {
+        function startQuestionTimer(questionIndex = 0) {
             // Clear any existing timer
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -1458,10 +1554,13 @@
             const timerDisplay = document.getElementById('timer-display');
             const timerBarFill = document.getElementById('timer-bar-fill');
 
+            // Use lightning round time if in lightning round (questions 30+)
+            const timeLimit = questionIndex >= LIGHTNING_ROUND_START ? LIGHTNING_ROUND_TIME_LIMIT : QUESTION_TIME_LIMIT;
+
             timerInterval = setInterval(() => {
                 const elapsed = (Date.now() - questionStartTime) / 1000;
-                const remaining = Math.max(0, QUESTION_TIME_LIMIT - elapsed);
-                const percentage = (remaining / QUESTION_TIME_LIMIT) * 100;
+                const remaining = Math.max(0, timeLimit - elapsed);
+                const percentage = (remaining / timeLimit) * 100;
 
                 timerDisplay.textContent = Math.ceil(remaining);
                 timerBarFill.style.width = percentage + '%';
@@ -1491,7 +1590,7 @@
             }
         }
 
-        window.selectAnswer = function(answerIndex, correctIndex) {
+        window.selectAnswer = function(answerIndex, correctIndex, questionIndex) {
             if (hasAnswered) return;
 
             hasAnswered = true;
@@ -1503,8 +1602,10 @@
             let pointsEarned = 0;
             if (isCorrect && questionStartTime) {
                 const timeElapsed = (Date.now() - questionStartTime) / 1000;
+                // Use appropriate time limit for scoring
+                const timeLimit = questionIndex >= LIGHTNING_ROUND_START ? LIGHTNING_ROUND_TIME_LIMIT : QUESTION_TIME_LIMIT;
                 // Points decrease over time: 1000 points for instant, down to 500 at time limit
-                const timePercentage = Math.min(timeElapsed / QUESTION_TIME_LIMIT, 1);
+                const timePercentage = Math.min(timeElapsed / timeLimit, 1);
                 pointsEarned = Math.round(MAX_POINTS - (timePercentage * 500));
                 pointsEarned = Math.max(pointsEarned, 0);
             }
@@ -1547,6 +1648,16 @@
         function updateHostView(gameState) {
             const questionIndex = gameState.currentQuestion;
             const question = questions[questionIndex];
+
+            // Show lightning badge if in lightning round
+            const hostLightningBadgeContainer = document.getElementById('host-lightning-badge-container');
+            const isLightningRound = questionIndex >= LIGHTNING_ROUND_START;
+
+            if (isLightningRound) {
+                hostLightningBadgeContainer.classList.remove('hidden');
+            } else {
+                hostLightningBadgeContainer.classList.add('hidden');
+            }
 
             document.getElementById('host-question-number').textContent = questionIndex + 1;
             document.getElementById('host-question-display').textContent = question.question;
