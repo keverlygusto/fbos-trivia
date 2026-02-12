@@ -786,6 +786,20 @@
             color: #f59e0b;
         }
 
+        #final-results-btn {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow:
+                0 4px 6px -1px rgba(251, 191, 36, 0.4),
+                0 2px 4px -1px rgba(251, 191, 36, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        #final-results-btn:hover {
+            box-shadow:
+                0 10px 15px -3px rgba(251, 191, 36, 0.5),
+                0 4px 6px -2px rgba(251, 191, 36, 0.4);
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 24px 16px;
@@ -980,6 +994,7 @@
                         <button class="btn" onclick="previousQuestion()" id="prev-btn">← Previous</button>
                         <button class="btn" onclick="nextQuestion()" id="next-btn">Next →</button>
                         <button class="btn" onclick="revealAnswer()" id="reveal-btn">Reveal Answer</button>
+                        <button class="btn" onclick="showFinalResults()" id="final-results-btn" class="hidden">🏆 See Final Results</button>
                         <button class="btn" onclick="restartGame()" id="restart-btn">Restart Game</button>
                     </div>
 
@@ -1494,6 +1509,7 @@
         function updatePlayerView(gameState) {
             const questionIndex = gameState.currentQuestion;
             const question = questions[questionIndex];
+            const isLastQuestion = questionIndex >= questions.length - 1;
 
             // Show lightning badge if in lightning round
             const lightningBadgeContainer = document.getElementById('lightning-badge-container');
@@ -1513,6 +1529,13 @@
 
             const answersContainer = document.getElementById('answers-container');
             const statusMessage = document.getElementById('status-message');
+
+            // Show waiting message after last question is answered
+            if (isLastQuestion && gameState.showAnswer) {
+                statusMessage.classList.remove('hidden', 'correct', 'incorrect');
+                statusMessage.classList.add('waiting');
+                statusMessage.textContent = '🏆 Waiting for host to reveal final results...';
+            }
 
             // Reset answered state when question changes
             if (!hasAnswered || gameState.showAnswer === false) {
@@ -1677,29 +1700,40 @@
             answersDisplay.innerHTML += '</div>';
 
             // Update button states
+            const isLastQuestion = questionIndex >= questions.length - 1;
             document.getElementById('prev-btn').disabled = questionIndex === 0;
-            document.getElementById('next-btn').disabled = questionIndex >= questions.length - 1;
+            document.getElementById('next-btn').disabled = isLastQuestion;
             document.getElementById('reveal-btn').disabled = gameState.showAnswer;
+
+            // Show "See Final Results" button only on last question
+            const finalResultsBtn = document.getElementById('final-results-btn');
+            if (isLastQuestion) {
+                finalResultsBtn.classList.remove('hidden');
+            } else {
+                finalResultsBtn.classList.add('hidden');
+            }
         }
 
         window.nextQuestion = function() {
             const gameStateRef = ref(database, 'gameState');
             onValue(gameStateRef, (snapshot) => {
                 const gameState = snapshot.val();
-                if (gameState) {
-                    if (gameState.currentQuestion < questions.length - 1) {
-                        update(gameStateRef, {
-                            currentQuestion: gameState.currentQuestion + 1,
-                            showAnswer: false
-                        });
-                    } else {
-                        // End of questions - show final results
-                        update(gameStateRef, {
-                            status: 'finished'
-                        });
-                    }
+                if (gameState && gameState.currentQuestion < questions.length - 1) {
+                    update(gameStateRef, {
+                        currentQuestion: gameState.currentQuestion + 1,
+                        showAnswer: false
+                    });
                 }
             }, { onlyOnce: true });
+        };
+
+        window.showFinalResults = function() {
+            if (!isHost) return;
+
+            const gameStateRef = ref(database, 'gameState');
+            update(gameStateRef, {
+                status: 'finished'
+            });
         };
 
         window.previousQuestion = function() {
