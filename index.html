@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Trivia Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .question-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .answer-btn {
+            padding: 20px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            color: #333;
+        }
+
+        .answer-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .answer-btn.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .answer-btn.correct {
+            background: #4caf50;
+            border-color: #4caf50;
+            color: white;
+        }
+
+        .answer-btn.incorrect {
+            background: #f44336;
+            border-color: #f44336;
+            color: white;
+        }
+
+        .leaderboard {
+            margin-top: 20px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .leaderboard-item.top-3 {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        }
+
+        .rank {
+            font-size: 20px;
+            color: #667eea;
+            min-width: 40px;
+        }
+
+        .player-name {
+            flex: 1;
+            margin: 0 15px;
+        }
+
+        .score {
+            font-size: 20px;
+            color: #667eea;
+        }
+
+        .host-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .question-info {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status-message.waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-message.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-message.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 600px) {
+            .answers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .host-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="setup-screen" class="card">
+            <h1>🎯 Team Trivia</h1>
+            <p class="subtitle">Real-time multiplayer trivia game</p>
+
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="selectMode('player')">Join as Player</button>
+                <button class="mode-btn" onclick="selectMode('host')">Host Game</button>
+            </div>
+
+            <div id="player-setup">
+                <div class="input-group">
+                    <label for="player-name">Your Name</label>
+                    <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+                </div>
+                <button class="btn" onclick="joinGame()">Join Game</button>
+            </div>
+
+            <div id="host-setup" class="hidden">
+                <div class="input-group">
+                    <label for="host-code">Host Code</label>
+                    <input type="password" id="host-code" placeholder="Enter host code (default: host123)">
+                </div>
+                <button class="btn" onclick="startAsHost()">Start Hosting</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="card hidden">
+            <div id="player-view">
+                <h2>Question <span id="question-number">1</span></h2>
+
+                <div id="status-message" class="status-message waiting hidden">
+                    Waiting for next question...
+                </div>
+
+                <div id="question-display" class="question-display"></div>
+
+                <div id="answers-container" class="answers-grid"></div>
+
+                <div id="player-leaderboard" class="leaderboard">
+                    <h3>Leaderboard</h3>
+                    <div id="player-leaderboard-list"></div>
+                </div>
+            </div>
+
+            <div id="host-view" class="hidden">
+                <h2>Host Controls</h2>
+
+                <div class="question-info">
+                    Question <span id="host-question-number">1</span> of <span id="total-questions">15</span>
+                </div>
+
+                <div class="host-controls">
+                    <button class="btn" onclick="previousQuestion()" id="prev-btn">← Previous</button>
+                    <button class="btn" onclick="nextQuestion()" id="next-btn">Next →</button>
+                    <button class="btn" onclick="revealAnswer()" id="reveal-btn">Reveal Answer</button>
+                </div>
+
+                <div id="host-question-display" class="question-display"></div>
+
+                <div id="host-answers-display"></div>
+
+                <div id="host-leaderboard" class="leaderboard">
+                    <h3>Leaderboard</h3>
+                    <div id="host-leaderboard-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPqQ0FRwo2b2o4Pyu6yiyJNWFrU0rZFKo",
+            authDomain: "fbos-trivia.firebaseapp.com",
+            databaseURL: "https://fbos-trivia-default-rtdb.firebaseio.com",
+            projectId: "fbos-trivia",
+            storageBucket: "fbos-trivia.firebasestorage.app",
+            messagingSenderId: "155420030356",
+            appId: "1:155420030356:web:020161ff0c2c992c6e4b81"
+        };
+
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update, push, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // TRIVIA QUESTIONS - Customize these!
+        const questions = [
+            {
+                question: "What is the largest planet in our solar system?",
+                answers: ["Earth", "Jupiter", "Saturn", "Mars"],
+                correct: 1
+            },
+            {
+                question: "Who painted the Mona Lisa?",
+                answers: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
+                correct: 2
+            },
+            {
+                question: "What is the capital of Australia?",
+                answers: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
+                correct: 2
+            },
+            {
+                question: "Which element has the chemical symbol 'Au'?",
+                answers: ["Silver", "Gold", "Aluminum", "Argon"],
+                correct: 1
+            },
+            {
+                question: "In what year did World War II end?",
+                answers: ["1943", "1944", "1945", "1946"],
+                correct: 2
+            },
+            {
+                question: "What is the smallest country in the world?",
+                answers: ["Monaco", "Vatican City", "San Marino", "Liechtenstein"],
+                correct: 1
+            },
+            {
+                question: "Which planet is known as the Red Planet?",
+                answers: ["Venus", "Mars", "Jupiter", "Saturn"],
+                correct: 1
+            },
+            {
+                question: "Who wrote 'Romeo and Juliet'?",
+                answers: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"],
+                correct: 2
+            },
+            {
+                question: "What is the longest river in the world?",
+                answers: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"],
+                correct: 1
+            },
+            {
+                question: "How many continents are there?",
+                answers: ["5", "6", "7", "8"],
+                correct: 2
+            },
+            {
+                question: "What is the speed of light?",
+                answers: ["300,000 km/s", "150,000 km/s", "450,000 km/s", "600,000 km/s"],
+                correct: 0
+            },
+            {
+                question: "Which country invented pizza?",
+                answers: ["France", "Italy", "Greece", "Spain"],
+                correct: 1
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                answers: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                correct: 3
+            },
+            {
+                question: "Who developed the theory of relativity?",
+                answers: ["Isaac Newton", "Albert Einstein", "Stephen Hawking", "Niels Bohr"],
+                correct: 1
+            },
+            {
+                question: "What is the hardest natural substance on Earth?",
+                answers: ["Gold", "Iron", "Diamond", "Platinum"],
+                correct: 2
+            }
+        ];
+
+        // Global state
+        let currentMode = 'player';
+        let playerId = null;
+        let playerName = null;
+        let isHost = false;
+        let hasAnswered = false;
+
+        // Mode selection
+        window.selectMode = function(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (mode === 'player') {
+                document.getElementById('player-setup').classList.remove('hidden');
+                document.getElementById('host-setup').classList.add('hidden');
+            } else {
+                document.getElementById('player-setup').classList.add('hidden');
+                document.getElementById('host-setup').classList.remove('hidden');
+            }
+        };
+
+        // Join as player
+        window.joinGame = function() {
+            const nameInput = document.getElementById('player-name');
+            playerName = nameInput.value.trim();
+
+            if (!playerName) {
+                alert('Please enter your name');
+                return;
+            }
+
+            playerId = 'player_' + Date.now();
+
+            // Add player to database
+            set(ref(database, 'players/' + playerId), {
+                name: playerName,
+                score: 0,
+                joinedAt: Date.now()
+            });
+
+            // Initialize game state if needed
+            const gameStateRef = ref(database, 'gameState');
+            onValue(gameStateRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    set(gameStateRef, {
+                        currentQuestion: 0,
+                        showAnswer: false,
+                        totalQuestions: questions.length
+                    });
+                }
+            }, { onlyOnce: true });
+
+            showGameScreen();
+            setupPlayerListeners();
+        };
+
+        // Start as host
+        window.startAsHost = function() {
+            const codeInput = document.getElementById('host-code');
+            const code = codeInput.value.trim();
+
+            if (code !== 'host123') {
+                alert('Incorrect host code');
+                return;
+            }
+
+            isHost = true;
+            playerName = 'Host';
+
+            // Reset game state
+            set(ref(database, 'gameState'), {
+                currentQuestion: 0,
+                showAnswer: false,
+                totalQuestions: questions.length
+            });
+
+            showGameScreen();
+            setupHostListeners();
+        };
+
+        function showGameScreen() {
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            if (isHost) {
+                document.getElementById('player-view').classList.add('hidden');
+                document.getElementById('host-view').classList.remove('hidden');
+                document.getElementById('total-questions').textContent = questions.length;
+            } else {
+                document.getElementById('player-view').classList.remove('hidden');
+                document.getElementById('host-view').classList.add('hidden');
+            }
+        }
+
+        function setupPlayerListeners() {
+            // Listen for game state changes
+            const gameStateRef = ref(database, 'gameState');
+            onValue(gameStateRef, (snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState) {
+                    updatePlayerView(gameState);
+                }
+            });
+
+            // Listen for leaderboard changes
+            const playersRef = ref(database, 'players');
+            onValue(playersRef, (snapshot) => {
+                updateLeaderboard(snapshot.val(), 'player-leaderboard-list');
+            });
+        }
+
+        function setupHostListeners() {
+            // Listen for game state to update display
+            const gameStateRef = ref(database, 'gameState');
+            onValue(gameStateRef, (snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState) {
+                    updateHostView(gameState);
+                }
+            });
+
+            // Listen for leaderboard changes
+            const playersRef = ref(database, 'players');
+            onValue(playersRef, (snapshot) => {
+                updateLeaderboard(snapshot.val(), 'host-leaderboard-list');
+            });
+        }
+
+        function updatePlayerView(gameState) {
+            const questionIndex = gameState.currentQuestion;
+            const question = questions[questionIndex];
+
+            document.getElementById('question-number').textContent = questionIndex + 1;
+            document.getElementById('question-display').textContent = question.question;
+
+            const answersContainer = document.getElementById('answers-container');
+            const statusMessage = document.getElementById('status-message');
+
+            // Reset answered state when question changes
+            if (!hasAnswered || gameState.showAnswer === false) {
+                if (gameState.showAnswer === false) {
+                    hasAnswered = false;
+                    statusMessage.classList.add('hidden');
+                }
+
+                answersContainer.innerHTML = '';
+                question.answers.forEach((answer, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-btn';
+                    btn.textContent = String.fromCharCode(65 + index) + '. ' + answer;
+                    btn.onclick = () => selectAnswer(index, question.correct);
+
+                    if (gameState.showAnswer) {
+                        btn.disabled = true;
+                        if (index === question.correct) {
+                            btn.classList.add('correct');
+                        }
+                    }
+
+                    answersContainer.appendChild(btn);
+                });
+            }
+        }
+
+        window.selectAnswer = function(answerIndex, correctIndex) {
+            if (hasAnswered) return;
+
+            hasAnswered = true;
+            const isCorrect = answerIndex === correctIndex;
+
+            // Update UI
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === answerIndex) {
+                    btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+            });
+
+            // Show status message
+            const statusMessage = document.getElementById('status-message');
+            statusMessage.classList.remove('hidden', 'waiting', 'correct', 'incorrect');
+            statusMessage.classList.add(isCorrect ? 'correct' : 'incorrect');
+            statusMessage.textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect';
+
+            // Update score in database
+            if (isCorrect && playerId) {
+                const playerRef = ref(database, 'players/' + playerId);
+                onValue(playerRef, (snapshot) => {
+                    const playerData = snapshot.val();
+                    if (playerData) {
+                        update(ref(database, 'players/' + playerId), {
+                            score: (playerData.score || 0) + 1
+                        });
+                    }
+                }, { onlyOnce: true });
+            }
+        };
+
+        function updateHostView(gameState) {
+            const questionIndex = gameState.currentQuestion;
+            const question = questions[questionIndex];
+
+            document.getElementById('host-question-number').textContent = questionIndex + 1;
+            document.getElementById('host-question-display').textContent = question.question;
+
+            const answersDisplay = document.getElementById('host-answers-display');
+            answersDisplay.innerHTML = '<div style="margin-top: 20px;">';
+            question.answers.forEach((answer, index) => {
+                const isCorrect = index === question.correct;
+                const letter = String.fromCharCode(65 + index);
+                answersDisplay.innerHTML += `
+                    <div style="padding: 10px; margin: 5px 0; background: ${gameState.showAnswer && isCorrect ? '#d4edda' : '#f5f5f5'};
+                         border-radius: 5px; font-weight: ${isCorrect ? 'bold' : 'normal'};">
+                        ${letter}. ${answer} ${gameState.showAnswer && isCorrect ? '✓' : ''}
+                    </div>
+                `;
+            });
+            answersDisplay.innerHTML += '</div>';
+
+            // Update button states
+            document.getElementById('prev-btn').disabled = questionIndex === 0;
+            document.getElementById('next-btn').disabled = questionIndex >= questions.length - 1;
+            document.getElementById('reveal-btn').disabled = gameState.showAnswer;
+        }
+
+        window.nextQuestion = function() {
+            const gameStateRef = ref(database, 'gameState');
+            onValue(gameStateRef, (snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState && gameState.currentQuestion < questions.length - 1) {
+                    update(gameStateRef, {
+                        currentQuestion: gameState.currentQuestion + 1,
+                        showAnswer: false
+                    });
+                }
+            }, { onlyOnce: true });
+        };
+
+        window.previousQuestion = function() {
+            const gameStateRef = ref(database, 'gameState');
+            onValue(gameStateRef, (snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState && gameState.currentQuestion > 0) {
+                    update(gameStateRef, {
+                        currentQuestion: gameState.currentQuestion - 1,
+                        showAnswer: false
+                    });
+                }
+            }, { onlyOnce: true });
+        };
+
+        window.revealAnswer = function() {
+            const gameStateRef = ref(database, 'gameState');
+            update(gameStateRef, {
+                showAnswer: true
+            });
+        };
+
+        function updateLeaderboard(players, elementId) {
+            if (!players) return;
+
+            const playerArray = Object.entries(players).map(([id, data]) => ({
+                id,
+                name: data.name,
+                score: data.score || 0
+            }));
+
+            playerArray.sort((a, b) => b.score - a.score);
+
+            const listElement = document.getElementById(elementId);
+            listElement.innerHTML = '';
+
+            playerArray.forEach((player, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item' + (index < 3 ? ' top-3' : '');
+                item.innerHTML = `
+                    <span class="rank">#${index + 1}</span>
+                    <span class="player-name">${player.name}</span>
+                    <span class="score">${player.score} pts</span>
+                `;
+                listElement.appendChild(item);
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (playerId) {
+                remove(ref(database, 'players/' + playerId));
+            }
+        });
+    </script>
+</body>
+</html>
