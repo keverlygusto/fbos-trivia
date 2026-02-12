@@ -312,6 +312,47 @@
             border-radius: 8px;
             font-weight: 600;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .remove-player-btn {
+            position: absolute;
+            right: 10px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .remove-player-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+
+        .leaderboard-item {
+            position: relative;
+        }
+
+        .leaderboard-item .remove-player-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .leaderboard-item .remove-player-btn:hover {
+            transform: translateY(-50%) scale(1.1);
         }
 
         .final-results {
@@ -906,14 +947,40 @@
                 return;
             }
 
-            const playerArray = Object.entries(players).map(([id, data]) => data.name);
-            playerArray.forEach(name => {
+            const playerArray = Object.entries(players).map(([id, data]) => ({
+                id,
+                name: data.name
+            }));
+
+            playerArray.forEach(player => {
                 const item = document.createElement('div');
                 item.className = 'player-item';
-                item.textContent = name;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = player.name;
+                item.appendChild(nameSpan);
+
+                // Add remove button for host
+                if (isHost) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-player-btn';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.title = 'Remove player';
+                    removeBtn.onclick = () => removePlayer(player.id);
+                    item.appendChild(removeBtn);
+                }
+
                 lobbyList.appendChild(item);
             });
         }
+
+        window.removePlayer = function(playerId) {
+            if (!isHost) return;
+
+            if (confirm('Remove this player from the game?')) {
+                remove(ref(database, 'players/' + playerId));
+            }
+        };
 
         function updatePlayerView(gameState) {
             const questionIndex = gameState.currentQuestion;
@@ -1133,6 +1200,9 @@
             if (!listElement) return;
             listElement.innerHTML = '';
 
+            // Check if this is the host leaderboard during gameplay
+            const showRemoveButton = isHost && elementId === 'host-leaderboard-list';
+
             playerArray.forEach((player, index) => {
                 const item = document.createElement('div');
                 item.className = 'leaderboard-item' + (index < 3 ? ' top-3' : '');
@@ -1141,6 +1211,17 @@
                     <span class="player-name">${player.name}</span>
                     <span class="score">${player.score.toLocaleString()} pts</span>
                 `;
+
+                // Add remove button for host
+                if (showRemoveButton) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-player-btn';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.title = 'Remove player';
+                    removeBtn.onclick = () => removePlayer(player.id);
+                    item.appendChild(removeBtn);
+                }
+
                 listElement.appendChild(item);
             });
         }
