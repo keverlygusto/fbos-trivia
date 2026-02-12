@@ -801,7 +801,6 @@
         }
 
         .all-answered-notification {
-            display: inline-block;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 12px 24px;
@@ -813,6 +812,10 @@
             animation: slideDown 0.3s ease-out;
             border: 2px solid #10b981;
             text-align: center;
+        }
+
+        .all-answered-notification:not(.hidden) {
+            display: inline-block;
         }
 
         .all-answered-notification::before {
@@ -1466,10 +1469,22 @@
         function checkAllPlayersAnsweredRealtime(players, currentQuestionIndex) {
             const notification = document.getElementById('all-answered-notification');
 
-            if (!players || !notification) return;
+            if (!players || !notification) {
+                if (notification) notification.classList.add('hidden');
+                return;
+            }
 
             const playerArray = Object.values(players);
-            const allAnswered = playerArray.length > 0 && playerArray.every(player =>
+
+            // Need at least one player to show notification
+            if (playerArray.length === 0) {
+                notification.classList.add('hidden');
+                return;
+            }
+
+            // Check if ALL players have answered the CURRENT question
+            const allAnswered = playerArray.every(player =>
+                player.answeredQuestion !== undefined &&
                 player.answeredQuestion === currentQuestionIndex
             );
 
