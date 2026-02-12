@@ -231,6 +231,56 @@
             margin-bottom: 20px;
         }
 
+        .timer-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .timer-display.warning {
+            color: #ff9800;
+        }
+
+        .timer-display.danger {
+            color: #f44336;
+        }
+
+        .timer-bar {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 auto;
+            max-width: 400px;
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #667eea);
+            transition: width 0.1s linear;
+        }
+
+        .timer-bar-fill.warning {
+            background: linear-gradient(90deg, #ff9800, #ff5722);
+        }
+
+        .timer-bar-fill.danger {
+            background: #f44336;
+        }
+
+        .points-earned {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4caf50;
+            margin-top: 10px;
+        }
+
         .status-message {
             text-align: center;
             padding: 15px;
@@ -297,9 +347,18 @@
             <div id="player-view">
                 <h2>Question <span id="question-number">1</span></h2>
 
+                <div class="timer-container">
+                    <div id="timer-display" class="timer-display">20</div>
+                    <div class="timer-bar">
+                        <div id="timer-bar-fill" class="timer-bar-fill" style="width: 100%"></div>
+                    </div>
+                </div>
+
                 <div id="status-message" class="status-message waiting hidden">
                     Waiting for next question...
                 </div>
+
+                <div id="points-earned" class="points-earned hidden"></div>
 
                 <div id="question-display" class="question-display"></div>
 
@@ -356,81 +415,139 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // TRIVIA QUESTIONS - Customize these!
+        // TRIVIA QUESTIONS
+        const QUESTION_TIME_LIMIT = 20; // seconds
+        const MAX_POINTS = 1000;
+
         const questions = [
+            // WINTER OLYMPICS (10 questions)
             {
-                question: "What is the largest planet in our solar system?",
-                answers: ["Earth", "Jupiter", "Saturn", "Mars"],
+                question: "In which country were the first Winter Olympics held in 1924?",
+                answers: ["Switzerland", "France", "Norway", "Austria"],
                 correct: 1
             },
             {
-                question: "Who painted the Mona Lisa?",
-                answers: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
-                correct: 2
-            },
-            {
-                question: "What is the capital of Australia?",
-                answers: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
-                correct: 2
-            },
-            {
-                question: "Which element has the chemical symbol 'Au'?",
-                answers: ["Silver", "Gold", "Aluminum", "Argon"],
+                question: "Which sport involves sweeping and sliding stones on ice?",
+                answers: ["Ice Hockey", "Curling", "Luge", "Skeleton"],
                 correct: 1
             },
             {
-                question: "In what year did World War II end?",
-                answers: ["1943", "1944", "1945", "1946"],
-                correct: 2
+                question: "How many events are in the biathlon?",
+                answers: ["3", "5", "7", "11"],
+                correct: 3
             },
             {
-                question: "What is the smallest country in the world?",
+                question: "Which country has won the most Winter Olympic medals of all time?",
+                answers: ["USA", "Canada", "Russia", "Norway"],
+                correct: 3
+            },
+            {
+                question: "In which year were the Winter Olympics held in Salt Lake City?",
+                answers: ["1998", "2002", "2006", "2010"],
+                correct: 1
+            },
+            {
+                question: "What is the fastest Winter Olympic sport?",
+                answers: ["Downhill Skiing", "Luge", "Bobsled", "Speed Skating"],
+                correct: 1
+            },
+            {
+                question: "How many rings are on the Olympic flag?",
+                answers: ["4", "5", "6", "7"],
+                correct: 1
+            },
+            {
+                question: "Which Winter Olympic sport combines cross-country skiing and rifle shooting?",
+                answers: ["Nordic Combined", "Biathlon", "Ski Jumping", "Alpine Skiing"],
+                correct: 1
+            },
+            {
+                question: "Where were the 2022 Winter Olympics held?",
+                answers: ["Tokyo, Japan", "Beijing, China", "PyeongChang, South Korea", "Sochi, Russia"],
+                correct: 1
+            },
+            {
+                question: "In figure skating, what is the term for a jump with a backward takeoff?",
+                answers: ["Axel", "Lutz", "Salchow", "Loop"],
+                correct: 0
+            },
+
+            // GEOGRAPHY (10 questions)
+            {
+                question: "What is the capital of Iceland?",
+                answers: ["Oslo", "Reykjavik", "Helsinki", "Copenhagen"],
+                correct: 1
+            },
+            {
+                question: "Which African country has the most pyramids?",
+                answers: ["Egypt", "Sudan", "Libya", "Ethiopia"],
+                correct: 1
+            },
+            {
+                question: "What is the smallest country in the world by area?",
                 answers: ["Monaco", "Vatican City", "San Marino", "Liechtenstein"],
                 correct: 1
             },
             {
-                question: "Which planet is known as the Red Planet?",
-                answers: ["Venus", "Mars", "Jupiter", "Saturn"],
+                question: "Which river flows through the Grand Canyon?",
+                answers: ["Mississippi River", "Colorado River", "Snake River", "Columbia River"],
                 correct: 1
             },
             {
-                question: "Who wrote 'Romeo and Juliet'?",
-                answers: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"],
+                question: "What is the only country that borders both the Atlantic and Indian Oceans?",
+                answers: ["Australia", "Brazil", "South Africa", "Indonesia"],
                 correct: 2
             },
             {
-                question: "What is the longest river in the world?",
-                answers: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"],
-                correct: 1
-            },
-            {
-                question: "How many continents are there?",
-                answers: ["5", "6", "7", "8"],
-                correct: 2
-            },
-            {
-                question: "What is the speed of light?",
-                answers: ["300,000 km/s", "150,000 km/s", "450,000 km/s", "600,000 km/s"],
-                correct: 0
-            },
-            {
-                question: "Which country invented pizza?",
-                answers: ["France", "Italy", "Greece", "Spain"],
-                correct: 1
-            },
-            {
-                question: "What is the largest ocean on Earth?",
-                answers: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                question: "Which country has the most time zones?",
+                answers: ["Russia", "USA", "China", "France"],
                 correct: 3
             },
             {
-                question: "Who developed the theory of relativity?",
-                answers: ["Isaac Newton", "Albert Einstein", "Stephen Hawking", "Niels Bohr"],
+                question: "What is the driest place on Earth?",
+                answers: ["Sahara Desert", "Death Valley", "Atacama Desert", "Gobi Desert"],
+                correct: 2
+            },
+            {
+                question: "Which mountain range separates Europe and Asia?",
+                answers: ["Alps", "Himalayas", "Andes", "Ural Mountains"],
+                correct: 3
+            },
+            {
+                question: "What is the largest island in the Mediterranean Sea?",
+                answers: ["Crete", "Cyprus", "Sicily", "Sardinia"],
+                correct: 2
+            },
+            {
+                question: "Which U.S. state has the longest coastline?",
+                answers: ["California", "Florida", "Alaska", "Hawaii"],
+                correct: 2
+            },
+
+            // FOOD (5 questions)
+            {
+                question: "What is the main ingredient in traditional Japanese miso soup?",
+                answers: ["Tofu", "Seaweed", "Fermented soybeans", "Rice"],
+                correct: 2
+            },
+            {
+                question: "Which country is the largest producer of coffee in the world?",
+                answers: ["Colombia", "Vietnam", "Brazil", "Ethiopia"],
+                correct: 2
+            },
+            {
+                question: "What type of pasta is shaped like little rice grains?",
+                answers: ["Orzo", "Couscous", "Farro", "Risoni"],
+                correct: 0
+            },
+            {
+                question: "Which fruit is known as the 'king of fruits' in Southeast Asia?",
+                answers: ["Mango", "Durian", "Rambutan", "Dragonfruit"],
                 correct: 1
             },
             {
-                question: "What is the hardest natural substance on Earth?",
-                answers: ["Gold", "Iron", "Diamond", "Platinum"],
+                question: "What is the primary ingredient in the Middle Eastern dish falafel?",
+                answers: ["Lentils", "Black beans", "Chickpeas", "Kidney beans"],
                 correct: 2
             }
         ];
@@ -441,6 +558,8 @@
         let playerName = null;
         let isHost = false;
         let hasAnswered = false;
+        let questionStartTime = null;
+        let timerInterval = null;
 
         // Mode selection
         window.selectMode = function(mode) {
@@ -579,6 +698,10 @@
                 if (gameState.showAnswer === false) {
                     hasAnswered = false;
                     statusMessage.classList.add('hidden');
+                    document.getElementById('points-earned').classList.add('hidden');
+
+                    // Start timer for new question
+                    startQuestionTimer();
                 }
 
                 answersContainer.innerHTML = '';
@@ -600,11 +723,66 @@
             }
         }
 
+        function startQuestionTimer() {
+            // Clear any existing timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            questionStartTime = Date.now();
+            const timerDisplay = document.getElementById('timer-display');
+            const timerBarFill = document.getElementById('timer-bar-fill');
+
+            timerInterval = setInterval(() => {
+                const elapsed = (Date.now() - questionStartTime) / 1000;
+                const remaining = Math.max(0, QUESTION_TIME_LIMIT - elapsed);
+                const percentage = (remaining / QUESTION_TIME_LIMIT) * 100;
+
+                timerDisplay.textContent = Math.ceil(remaining);
+                timerBarFill.style.width = percentage + '%';
+
+                // Update colors based on time remaining
+                timerDisplay.classList.remove('warning', 'danger');
+                timerBarFill.classList.remove('warning', 'danger');
+
+                if (remaining <= 5) {
+                    timerDisplay.classList.add('danger');
+                    timerBarFill.classList.add('danger');
+                } else if (remaining <= 10) {
+                    timerDisplay.classList.add('warning');
+                    timerBarFill.classList.add('warning');
+                }
+
+                if (remaining === 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 100);
+        }
+
+        function stopQuestionTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
         window.selectAnswer = function(answerIndex, correctIndex) {
             if (hasAnswered) return;
 
             hasAnswered = true;
+            stopQuestionTimer();
+
             const isCorrect = answerIndex === correctIndex;
+
+            // Calculate points based on time (Kahoot-style)
+            let pointsEarned = 0;
+            if (isCorrect && questionStartTime) {
+                const timeElapsed = (Date.now() - questionStartTime) / 1000;
+                // Points decrease over time: 1000 points for instant, down to 500 at time limit
+                const timePercentage = Math.min(timeElapsed / QUESTION_TIME_LIMIT, 1);
+                pointsEarned = Math.round(MAX_POINTS - (timePercentage * 500));
+                pointsEarned = Math.max(pointsEarned, 0);
+            }
 
             // Update UI
             const buttons = document.querySelectorAll('.answer-btn');
@@ -615,20 +793,26 @@
                 }
             });
 
-            // Show status message
+            // Show status message and points
             const statusMessage = document.getElementById('status-message');
             statusMessage.classList.remove('hidden', 'waiting', 'correct', 'incorrect');
             statusMessage.classList.add(isCorrect ? 'correct' : 'incorrect');
             statusMessage.textContent = isCorrect ? '✓ Correct!' : '✗ Incorrect';
 
+            if (isCorrect && pointsEarned > 0) {
+                const pointsDisplay = document.getElementById('points-earned');
+                pointsDisplay.textContent = '+' + pointsEarned + ' points';
+                pointsDisplay.classList.remove('hidden');
+            }
+
             // Update score in database
-            if (isCorrect && playerId) {
+            if (isCorrect && playerId && pointsEarned > 0) {
                 const playerRef = ref(database, 'players/' + playerId);
                 onValue(playerRef, (snapshot) => {
                     const playerData = snapshot.val();
                     if (playerData) {
                         update(ref(database, 'players/' + playerId), {
-                            score: (playerData.score || 0) + 1
+                            score: (playerData.score || 0) + pointsEarned
                         });
                     }
                 }, { onlyOnce: true });
@@ -715,7 +899,7 @@
                 item.innerHTML = `
                     <span class="rank">#${index + 1}</span>
                     <span class="player-name">${player.name}</span>
-                    <span class="score">${player.score} pts</span>
+                    <span class="score">${player.score.toLocaleString()} pts</span>
                 `;
                 listElement.appendChild(item);
             });
